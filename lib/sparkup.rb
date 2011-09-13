@@ -1,5 +1,4 @@
 module Redcar
-
     class Sparkup
 
         def self.plugin_dir
