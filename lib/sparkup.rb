@@ -39,6 +39,12 @@ module Redcar
           indent_spaces = 4 if indent_spaces < 1 || indent_spaces.nil?
           indent_spaces
         end
+        
+        def self.set_new_value(value)
+          File.open(File.join(Redcar.user_dir, 'storage/sparkup.yaml'), 'w+') do |f|
+            f.write("indent_spaces:#{value}")
+          end
+        end
 
         # Get Sparkup's cmd
         def getCmd
@@ -46,9 +52,7 @@ module Redcar
         end
         
         def self.create_default_file
-          File.open(File.join(Redcar.user_dir, 'storage/sparkup.yaml'), 'w+') do |f|
-            f.write("indent_spaces:4")
-          end
+          self.set_new_value(4)
           4
         end
         
@@ -73,6 +77,7 @@ module Redcar
         def self.keymaps
             map = Redcar::Keymap.build("main", [:osx, :linux, :windows]) do
                 link "Ctrl+Shift+D", SparkupLine
+                link "Ctrl+Shift+I", SetIndentLevel
             end
             [map]
         end
@@ -92,9 +97,15 @@ module Redcar
             end
         end
         
-        class IndentLevelSpeedBar < SpeedBar
-          textbox :indent_level,  do |variable|
-            
+        class IndentLevelSpeedBar < Speedbar
+          label :indent_spaces_label, "Indent Spaces:"
+          textbox :indent_spaces do |value|
+            Sparkup.set_new_value(value)
+            indent_spaces.value = value
+          end
+          
+          def after_draw
+            self.indent_spaces.value = Sparkup.get_indent_value.to_s
           end
         end
 
@@ -118,7 +129,8 @@ module Redcar
         
         class SetIndentLevel < Redcar::Command
           def execute
-            
+            @speedbar = IndentLevelSpeedBar.new(tab)
+            win.open_speedbar(@speedbar)
           end
         end
 
