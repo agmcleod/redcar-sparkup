@@ -12,15 +12,8 @@ module Redcar
         @@sparkup_cmd = ""
 
         def initialize
-          path = File.join(Redcar.user_dir, 'storage/sparkup.yaml')
-          begin
-            contents = IO.read(path)
-          rescue Errno::ENOENT
-            self.create_default_file
-          end
-          self.indent_spaces = contents.split(':')[1].gsub(/\n/,'').to_i
-          self.indent_spaces = 4 if self.indent_spaces < 1 || self.indent_spaces.nil?
-          @@sparkup_cmd = "#{Sparkup.plugin_dir}/assets/sparkup/sparkup --indent-spaces=2"
+          self.indent_spaces = self.class.get_indent_value
+          @@sparkup_cmd = "#{Sparkup.plugin_dir}/assets/sparkup/sparkup --indent-spaces=#{self.indent_spaces}"
           
           # Set the menu item
           self.class.menus
@@ -31,21 +24,37 @@ module Redcar
 
           # Jython fallback if Python isn't installed
           unless self.class.hasPython
-              @@sparkup_cmd = "java -jar #{Sparkup.plugin_dir}/jython/jython.jar #{Sparkup.plugin_dir}/assets/sparkup/sparkup --indent-spaces=2"
+              @@sparkup_cmd = "java -jar #{Sparkup.plugin_dir}/jython/jython.jar #{Sparkup.plugin_dir}/assets/sparkup/sparkup --indent-spaces=#{self.indent_spaces}"
           end
+        end
+        
+        def self.get_indent_value
+          path = File.join(Redcar.user_dir, 'storage/sparkup.yaml')
+          begin
+            contents = IO.read(path)
+          rescue Errno::ENOENT
+            self.create_default_file
+          end
+          indent_spaces = contents.split(':')[1].gsub(/\n/,'').to_i
+          indent_spaces = 4 if indent_spaces < 1 || indent_spaces.nil?
+          indent_spaces
         end
 
         # Get Sparkup's cmd
         def getCmd
-            @@sparkup_cmd
+          @@sparkup_cmd
         end
         
-        def create_default_file
+        def self.create_default_file
           File.open(File.join(Redcar.user_dir, 'storage/sparkup.yaml'), 'w+') do |f|
             f.write("indent_spaces:4")
           end
-          self.indent_spaces = 4
+          4
         end
+        
+        # def create_default_file
+        #  self.indent_spaces = self.class.create_default_file
+        # end
 
         # Shows the menu in the toolbar
         def self.menus
@@ -81,6 +90,12 @@ module Redcar
                 pTest = `which python`
                 return pTest != ''
             end
+        end
+        
+        class IndentLevelSpeedBar < SpeedBar
+          textbox :indent_level,  do |variable|
+            
+          end
         end
 
         # Open Sparkup's file (this) for edit
