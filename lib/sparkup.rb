@@ -5,28 +5,46 @@ module Redcar
         def self.plugin_dir
           File.join(File.dirname(__FILE__), "..")
         end
+        
+        attr_accessor :indent_spaces
 
         # Default sparkup command, if OS has Python
-        @@sparkup_cmd = "#{Sparkup.plugin_dir}/assets/sparkup/sparkup"
+        @@sparkup_cmd = ""
 
         def initialize
+          path = File.join(Redcar.user_dir, 'storage/sparkup.yaml')
+          begin
+            contents = IO.read(path)
+          rescue Errno::ENOENT
+            self.create_default_file
+          end
+          self.indent_spaces = contents.split(':')[1].gsub(/\n/,'').to_i
+          self.indent_spaces = 4 if self.indent_spaces < 1 || self.indent_spaces.nil?
+          @@sparkup_cmd = "#{Sparkup.plugin_dir}/assets/sparkup/sparkup --indent-spaces=2"
+          
+          # Set the menu item
+          self.class.menus
 
-            # Set the menu item
-            self.menus
+          # Set the keybindings
+          # TODO: Make the keybindings as a preference
+          self.class.keymaps
 
-            # Set the keybindings
-            # TODO: Make the keybindings as a preference
-            self.keymaps
-
-            # Jython fallback if Python isn't installed
-            unless self.hasPython
-                @@sparkup_cmd = "java -jar #{Sparkup.plugin_dir}/jython/jython.jar #{Sparkup.plugin_dir}/assets/sparkup/sparkup"
-            end
+          # Jython fallback if Python isn't installed
+          unless self.class.hasPython
+              @@sparkup_cmd = "java -jar #{Sparkup.plugin_dir}/jython/jython.jar #{Sparkup.plugin_dir}/assets/sparkup/sparkup --indent-spaces=2"
+          end
         end
 
         # Get Sparkup's cmd
-        def self.getCmd
+        def getCmd
             @@sparkup_cmd
+        end
+        
+        def create_default_file
+          File.open(File.join(Redcar.user_dir, 'storage/sparkup.yaml'), 'w+') do |f|
+            f.write("indent_spaces:4")
+          end
+          self.indent_spaces = 4
         end
 
         # Shows the menu in the toolbar
@@ -36,6 +54,7 @@ module Redcar
                     sub_menu "Sparkup" do
                         item "Sparkup line", SparkupLine
                         item "Edit Sparkup", EditSparkup
+                        item "Set Indent Level", SetIndentLevel
                     end
                 end
             end
@@ -81,13 +100,19 @@ module Redcar
                 tab.focus
             end
         end
+        
+        class SetIndentLevel < Redcar::Command
+          def execute
+            
+          end
+        end
 
         # Run Sparkup
         class SparkupLine < EditTabCommand
             def execute
                 doc.replace_line(doc.cursor_line) do |ltext|
-
-                    cmd = Sparkup.getCmd
+                    spark = Sparkup.new
+                    cmd = spark.getCmd
                     dir = "#{Sparkup.plugin_dir}/assets"
                     startLine = doc.cursor_offset
 
