@@ -45,6 +45,7 @@ module Redcar
                     sub_menu "Sparkup" do
                         item "Sparkup line", SparkupLine
                         item "Edit Sparkup", EditSparkup
+                        item "Convert lines to list", ConvertToList
                     end
                 end
             end
@@ -54,6 +55,7 @@ module Redcar
         def self.keymaps
             map = Redcar::Keymap.build("main", [:osx, :linux, :windows]) do
                 link "Ctrl+Shift+D", SparkupLine
+                link "Ctrl+Shift+L", ConvertToList
             end
             [map]
         end

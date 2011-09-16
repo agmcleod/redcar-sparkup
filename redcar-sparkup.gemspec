@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "redcar-sparkup"
-  s.version = "1.0"
+  s.version = "1.01"
   s.platform = "ruby"
   s.authors = ["Aaron McLeod", "Pockata"]
   s.email = ["aaron.g.mcleod@gmail.com"]
